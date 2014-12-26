@@ -403,20 +403,31 @@ void intercept (XPointer user_data, XRecordInterceptData *data)
                 || (km->UseKeyCode == True
                     && key_code == km->from_kc))
             {
-                handle_key (self, km, mouse_pressed, key_event);
-            }
-            else if (km->pressed
-                    && (key_event == KeyPress || key_event == ButtonPress))
-            {
-                km->used = True;
+                if ((km->UseKeyCode == False
+                        && XkbKeycodeToKeysym (self->ctrl_conn, key_code, 0, 0)
+                            == km->from_ks)
+                    || (km->UseKeyCode == True
+                        && key_code == km->from_kc))
+                {
+                    handle_key (self, km, mouse_pressed, key_event);
+                }
+                else if (km->pressed && (key_event == KeyPress || key_event == ButtonPress))
+                {
+		    /* We should check if the pressed key is a modifier before marking the key as used. */
+		    if (key_code != 50)  /* hack; try if it works */
+		    {
+			km->used = True;
+		    }
+                }
             }
         }
     }
 
 exit:
-    XUnlockDisplay (self->ctrl_conn); 
+    XUnlockDisplay (self->ctrl_conn);
     XRecordFreeData (data);
 }
+
 
 KeyMap_t *parse_token (Display *dpy, char *token, Bool debug)
 {
